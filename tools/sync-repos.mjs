@@ -8,7 +8,7 @@
 //
 // Runs on a schedule in .github/workflows/deploy.yml. No token is needed for
 // public data; GITHUB_TOKEN is used when present to avoid rate limits.
-import { writeFile } from 'node:fs/promises';
+import { writeFile, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -42,49 +42,57 @@ await writeFile(join(dataDir, 'repos.js'),
 console.log(`Saved ${repos.length} repositories to data/repos.js`);
 
 // ---- open source pull requests
-// If GitHub does not answer, the file already in the repository is kept and the deploy goes on.
-async function listPulls() {
+// Three sources, merged: what data/oss.js already lists, the account's public activity feed
+// (works without special access, covers about the last 90 days) and the search API (only
+// answers for some tokens). Every pull request is then checked directly, so its state is current.
+// An empty or failed result never replaces a list that had entries.
+const ossFile = join(dataDir, 'oss.js');
+let known = [];
+try {
+  const txt = await readFile(ossFile, 'utf8');
+  known = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)).items || [];
+} catch (e) { /* first run */ }
+
+const candidates = new Map();                      // "owner/repo#number"
+const add = (repo, number) => { if (repo && number && repo.split('/')[0].toLowerCase() !== USER.toLowerCase()) candidates.set(`${repo}#${number}`, { repo, number }); };
+known.forEach((i) => add(i.repo, i.number));
+try {
+  for (let page = 1; page <= 3; page++) {
+    const events = await get(`https://api.github.com/users/${USER}/events/public?per_page=100&page=${page}`);
+    events.filter((e) => e.type === 'PullRequestEvent').forEach((e) => add(e.repo.name, e.payload.pull_request && e.payload.pull_request.number));
+    if (events.length < 100) break;
+  }
+} catch (e) { console.warn('Activity feed did not answer:', e.message.slice(0, 120)); }
+try {
+  const found = await get(`https://api.github.com/search/issues?q=author:${USER}+type:pr+is:public+-user:${USER}&per_page=100&sort=updated`);
+  found.items.forEach((it) => add(it.repository_url.replace('https://api.github.com/repos/', ''), it.number));
+} catch (e) { console.warn('Search did not answer (expected with the workflow token).'); }
+
+const stars = {};
+const items = [];
+let failed = 0;
+for (const { repo, number } of candidates.values()) {
   try {
-    const found = await get(`https://api.github.com/search/issues?q=author:${USER}+type:pr+is:public+-user:${USER}&per_page=100&sort=updated`);
-    return found.items.map((it) => ({
-      repo: it.repository_url.replace('https://api.github.com/repos/', ''), number: it.number, title: it.title, url: it.html_url,
-      merged: (it.pull_request && it.pull_request.merged_at) || null, open: it.state === 'open', created: it.created_at,
-    }));
+    const pr = await get(`https://api.github.com/repos/${repo}/pulls/${number}`);
+    if (!pr.user || pr.user.login.toLowerCase() !== USER.toLowerCase()) continue;
+    if (!pr.merged_at && pr.state !== 'open') continue;     // closed without merging
+    if (!(repo in stars)) stars[repo] = pr.base.repo.stargazers_count;
+    if (stars[repo] < MIN_STARS) continue;
+    let approved = false;
+    if (!pr.merged_at) {
+      try { approved = (await get(`https://api.github.com/repos/${repo}/pulls/${number}/reviews`)).some((r) => r.state === 'APPROVED'); } catch (e) { /* optional */ }
+    }
+    items.push({ repo, stars: stars[repo], number, title: pr.title, url: pr.html_url, state: pr.merged_at ? 'merged' : 'open', date: pr.merged_at || pr.created_at, approved });
   } catch (e) {
-    console.warn('Search did not answer, trying GraphQL:', e.message.slice(0, 120));
-    if (!headers.Authorization) throw e;
-    const res = await fetch('https://api.github.com/graphql', {
-      method: 'POST', headers,
-      body: JSON.stringify({ query: 'query($u:String!){user(login:$u){pullRequests(first:100,orderBy:{field:UPDATED_AT,direction:DESC}){nodes{number title url state mergedAt createdAt repository{nameWithOwner isPrivate owner{login}}}}}}', variables: { u: USER } }),
-    });
-    const body = await res.json();
-    if (!res.ok || body.errors) throw new Error('GraphQL answered ' + res.status + ' ' + JSON.stringify(body.errors || '').slice(0, 200));
-    return body.data.user.pullRequests.nodes
-      .filter((n) => !n.repository.isPrivate && n.repository.owner.login.toLowerCase() !== USER.toLowerCase())
-      .map((n) => ({ repo: n.repository.nameWithOwner, number: n.number, title: n.title, url: n.url, merged: n.mergedAt, open: n.state === 'OPEN', created: n.createdAt }));
+    failed++;
+    const old = known.find((i) => i.repo === repo && i.number === number);
+    if (old) items.push(old);                               // keep what we had if GitHub did not answer for it
   }
 }
-
-try {
-  const pulls = await listPulls();
-  const stars = {};
-  const items = [];
-  for (const it of pulls) {
-    if (!it.merged && !it.open) continue;                    // closed without merging
-    if (!(it.repo in stars)) stars[it.repo] = (await get(`https://api.github.com/repos/${it.repo}`)).stargazers_count;
-    if (stars[it.repo] < MIN_STARS) continue;
-    let approved = false;
-    if (!it.merged) {
-      try {
-        const reviews = await get(`https://api.github.com/repos/${it.repo}/pulls/${it.number}/reviews`);
-        approved = reviews.some((r) => r.state === 'APPROVED');
-      } catch (e) { /* reviews are optional */ }
-    }
-    items.push({ repo: it.repo, stars: stars[it.repo], number: it.number, title: it.title, url: it.url, state: it.merged ? 'merged' : 'open', date: it.merged || it.created, approved });
-  }
-  await writeFile(join(dataDir, 'oss.js'),
+if (!items.length && known.length) {
+  console.warn('Nothing came back from GitHub. Keeping the existing data/oss.js.');
+} else {
+  await writeFile(ossFile,
     `// Generated by tools/sync-repos.mjs. Do not edit by hand.\nwindow.OSS_SNAPSHOT = ${JSON.stringify({ fetchedAt: new Date().toISOString(), minStars: MIN_STARS, items }, null, 1)};\n`);
-  console.log(`Saved ${items.length} pull requests to data/oss.js`);
-} catch (e) {
-  console.warn('Open source list not refreshed, keeping the committed data/oss.js:', e.message.slice(0, 200));
+  console.log(`Saved ${items.length} pull requests to data/oss.js (${candidates.size} checked, ${failed} unanswered)`);
 }
