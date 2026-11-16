@@ -697,3 +697,56 @@ main { position: relative; }
   .clubs__grid { grid-template-columns: 1fr; }
   .club { min-height: 0; gap: 1.4rem; }
 }
+
+.stack .h2 { margin-bottom: 0; }
+
+
+/* open source cards */
+.oss { min-height: 22rem; }
+.oss header { justify-content: flex-start; align-items: center; gap: .75rem; }
+.oss .rc__av { width: 2.4rem; height: 2.4rem; background: #fff; }
+.oss__repo { font: 400 1.062rem/1.2 var(--fd); opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oss__repo b { font-weight: 500; opacity: 1; color: var(--ink); }
+.rc p.oss__stars { display: flex; align-items: baseline; gap: .5rem; margin-top: 2rem; opacity: 1; font-size: 1.062rem; }
+.oss__stars svg { width: 1.5rem; height: 1.5rem; fill: var(--acc); align-self: center; }
+.oss__stars b { font: 700 4rem/1 var(--fd); letter-spacing: -.03em; color: var(--acc); }
+.oss h3 { margin-top: .9rem; font: 500 1.35rem/1.2 var(--fd); letter-spacing: -.01em; }
+.oss footer { justify-content: space-between; }
+.oss footer a { opacity: 1; font: 500 1rem/1.3 var(--fd); }
+
+.pend {
+  margin-top: .5rem; padding: .5rem; border-radius: .75rem;
+  background: rgba(var(--pan), .8); border: 1px solid rgba(255, 255, 255, .2);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.pend__h { display: flex; align-items: baseline; gap: 1rem; padding: .7rem .85rem .9rem; }
+.pend__h b { font: 500 1.25rem/1 var(--fd); }
+.pend__h span { font-size: .95rem; opacity: .75; }
+.pend .repo a { grid-template-columns: 15.5rem 1fr 8.5rem 2.1rem; }
+.pend .repo:first-child a { border-top-color: rgba(11, 12, 14, .1); }
+.pend__st { justify-self: start; padding: .3rem .65rem; border-radius: 4rem; font: 500 .8rem/1 var(--fd); border: 1px solid rgba(11, 12, 14, .25); white-space: nowrap; }
+.pend__st.is-ok { background: var(--acc); color: #fff; border-color: transparent; }
+.pend .repo__n small { font: 400 .873rem/1 var(--fb); opacity: .6; letter-spacing: 0; flex: none; }
+@media (max-width: 991px) {
+  .pend .repo a { grid-template-columns: 1fr auto; }
+  .oss__stars b { font-size: 3rem; }
+}
+
+
+/* no visible scrollbar: the page still scrolls, and nothing shifts sideways when it appears */
+html { scrollbar-width: none; -ms-overflow-style: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* journey line: a faint dotted guide, drawn over in blue as you scroll */
+.route__track { fill: none; stroke: rgba(11, 12, 14, .22); stroke-width: 1.5; stroke-dasharray: 1 9; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.route__path { stroke: var(--acc); stroke-width: 2.5; stroke-linecap: round; }
+.route__tail { stroke: none; }
+.route__dot {
+  width: 1rem; height: 1rem; margin: -.5rem 0 0 -.5rem; background: var(--bg); border: 2px solid rgba(11, 12, 14, .3);
+  transform: scale(1); transition: background .4s var(--e-out), border-color .4s var(--e-out), box-shadow .6s var(--e-expo), transform .6s var(--e-expo);
+}
+.route__dot.is-on { background: var(--acc); border-color: var(--acc); transform: scale(1); box-shadow: 0 0 0 .4rem rgba(43, 59, 255, .16); }
+/* short connector from the line to its card, in place of the tall side rules */
+.jc::before { top: 50%; bottom: auto; width: 1.6rem; height: 2px; margin-top: -1px; background: rgba(11, 12, 14, .22); transition: background .4s var(--e-out); }
+.jc[data-side="l"]::before { left: -1.6rem; }
+.jc[data-side="r"]::before { right: -1.6rem; }

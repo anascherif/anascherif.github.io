@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://github.com https://avatars.githubusercontent.com; connect-src 'self' https://api.github.com; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Anas Abdelmalek Cherif | AI/ML and software engineering</title>
 <meta name="description" content="Anas Abdelmalek Cherif, ICT engineering student at INSAT, Tunis. Computer vision, autonomous systems and LLM security, taken past the demo.">
 <meta name="theme-color" content="#D9DAD4">
@@ -15,7 +17,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="assets/portrait-full.webp" fetchpriority="high">
 <link rel="stylesheet" href="css/style.css">
-<script>document.documentElement.classList.add("js")</script>
+<script src="js/head.js"></script>
 </head>
 <body>
 <a class="skip" href="#journey">Skip to content</a>
@@ -51,6 +53,7 @@
   <symbol id="s-term" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.200"/><path d="M7 10l3 2.500L7 15M12.500 15H17"/></symbol>
   <symbol id="s-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.500 20h7M10 17h4"/></symbol>
   <symbol id="s-merge" viewBox="0 0 24 24"><circle cx="7" cy="6" r="2.200"/><circle cx="7" cy="18" r="2.200"/><circle cx="17" cy="12" r="2.200"/><path d="M7 8.200v7.600M7 8.200a3.800 3.800 0 0 0 3.800 3.800h4"/></symbol>
+  <symbol id="s-star" viewBox="0 0 24 24"><path d="M12 2.600l2.900 5.900 6.500.900-4.700 4.600 1.100 6.500L12 17.400l-5.800 3.100 1.100-6.500L2.600 9.400l6.500-.900z"/></symbol>
   <symbol id="s-shield" viewBox="0 0 24 24"><path d="M12 3.500l7 2.500v5.500c0 4.200-2.900 7.600-7 9-4.100-1.400-7-4.800-7-9V6zM9 12l2.200 2.200L15.200 10"/></symbol>
 </svg>
 
@@ -84,7 +87,7 @@
     <a class="mi" href="#stack"><svg data-rv><use href="#i-stack"/></svg><span class="mi__t" data-fly="l5"><span>Stack</span></span></a>
     <a class="mi" href="#security"><svg data-rv><use href="#i-shield"/></svg><span class="mi__t" data-fly="l6"><span>Security</span></span></a>
     <a class="mi" href="#github"><svg data-rv><use href="#i-gh"/></svg><span class="mi__t" data-fly="l7"><span>GitHub</span></span></a>
-    <a class="mi" href="#results"><svg data-rv><use href="#i-cup"/></svg><span class="mi__t" data-fly="l8"><span>Results</span></span></a>
+    <a class="mi" href="#results"><svg data-rv><use href="#i-merge"/></svg><span class="mi__t" data-fly="l8"><span>Open source</span></span></a>
   </nav>
 
   <div class="panel side__marq" data-rv aria-hidden="true">
@@ -107,7 +110,7 @@
 </header>
 <div class="mmenu" id="mmenu" hidden>
   <nav aria-label="Sections">
-    <a href="#top">Home</a><a href="#journey">Journey</a><a href="#work">Work</a><a href="#focus">What I build</a><a href="#stack">Stack</a><a href="#security">Security</a><a href="#github">GitHub</a><a href="#results">Results</a><a href="#contact">Contact</a>
+    <a href="#top">Home</a><a href="#journey">Journey</a><a href="#work">Work</a><a href="#focus">What I build</a><a href="#stack">Stack</a><a href="#security">Security</a><a href="#github">GitHub</a><a href="#results">Open source</a><a href="#contact">Contact</a>
   </nav>
   <p>anasabdelmalekcherif@gmail.com</p>
 </div>
@@ -119,7 +122,7 @@
 
     <div class="hero__nav" aria-hidden="true">
       <div class="hero__navg"><span data-ghost="l1">Home</span><i></i><span data-ghost="l2">Journey</span><i></i><span data-ghost="l3">Work</span><i></i><span data-ghost="l4">What I build</span></div>
-      <div class="hero__navg"><span data-ghost="l5">Stack</span><i></i><span data-ghost="l6">Security</span><i></i><span data-ghost="l7">GitHub</span><i></i><span data-ghost="l8">Results</span></div>
+      <div class="hero__navg"><span data-ghost="l5">Stack</span><i></i><span data-ghost="l6">Security</span><i></i><span data-ghost="l7">GitHub</span><i></i><span data-ghost="l8">Open source</span></div>
     </div>
 
     <div class="hcard hcard--a" data-card><div class="hcard__bg"></div><b data-ghost="s1n">1st</b><span data-ghost="s1l">DRONATHON<br>3.0</span></div>
@@ -149,7 +152,7 @@
   <div class="wrap">
     <span class="label" data-in>Start small, ship real</span>
     <h2 class="h2" data-fill>Who I am (&amp;)<br>how I got here</h2>
-    <p class="lead" data-lines>I'm Anas, an ICT engineering student at INSAT in Tunis. I would rather ship than demo. This is the short version, in order.</p>
+    <p class="lead" data-lines>I'm Anas, an ICT engineering student at INSAT in Tunis.</p>
 
     <div class="route">
       <svg class="route__svg" aria-hidden="true"><path class="route__path"/><path class="route__tail"/></svg>
@@ -203,7 +206,7 @@
         <div class="jc__in">
           <p class="jc__y" data-roll>Summer 2027</p>
           <h3 class="jc__h">Your team, next summer</h3>
-          <div class="jc__swap"><p class="jc__p">The next stop is open. I am looking for a Summer 2027 internship in AI/ML, software engineering or AI security, where the work ships.</p></div>
+          <div class="jc__swap"><p class="jc__p">Open for Summer 2027: software engineer, AI/ML engineer or AI security engineer intern.</p></div>
           <div class="jc__foot"><span class="jc__av"><img src="assets/avatar.webp" alt="" width="96" height="96" loading="lazy"></span><span class="jc__who">@anas<br><time>open</time></span><a class="jc__btn" href="#contact">Get in touch</a></div>
         </div>
       </article>
@@ -218,7 +221,6 @@
         <span class="label label--inv" data-in>Selected work</span>
         <h2 class="h2 h2--inv" data-fill>Built to be measured,<br>not just demoed</h2>
       </div>
-      <p class="work__p" data-lines>AI, machine learning and security work, strongest first. Each one had to prove itself with numbers, tests or a working replay.</p>
     </div>
     <div class="work__view">
       <div class="work__track">
@@ -295,7 +297,6 @@
   <div class="wrap">
     <span class="label" data-in>Stack</span>
     <h2 class="h2" data-fill>Tools that<br>earn their place</h2>
-    <p class="lead" data-lines>Grouped by the job they do, strongest first. If it is listed here, I have shipped something with it.</p>
 
     <div class="tbl" data-in>
       <div class="tbl__c tbl__c--on">
@@ -377,7 +378,6 @@
         <span class="label" data-in>Live from GitHub</span>
         <h2 class="h2" data-fill>Every public<br>repository</h2>
       </div>
-      <p class="lead" data-lines>This list is read from GitHub when the page loads. A new public repository shows up here without anyone touching the site.</p>
     </div>
     <div class="ghp" data-in>
       <div class="ghp__bar">
@@ -397,18 +397,18 @@
 <section class="sec res" id="results" data-nav="results">
   <div class="wrap res__head">
     <div>
-      <span class="label" data-in>Results</span>
-      <h2 class="h2" data-fill>Ranked, reviewed<br>and merged</h2>
+      <span class="label" data-in>Open source</span>
+      <h2 class="h2" data-fill>Open source<br>contributions</h2>
     </div>
     <div class="res__dash" aria-hidden="true"></div>
   </div>
   <div class="res__view" data-drag>
-    <div class="res__track">
-      <article class="rc"><header><h3>First place,<br>DRONATHON 3.0</h3><span class="ic"><svg class="ln"><use href="#s-trophy"/></svg></span></header><p>Autonomous rescue drone built by a team of four at the IEEE AESS/RAS ENSIT hackathon. Zero collisions across ten seeded missions.</p><footer><span class="rc__av"><svg><use href="#i-drone"/></svg></span><span><b>IEEE AESS/RAS ENSIT</b><br>November 2026</span></footer></article>
-      <article class="rc"><header><h3>Claude Code tracing,<br>merged into MLflow</h3><span class="ic"><svg class="ln"><use href="#s-merge"/></svg></span></header><p>A pull request accepted into MLflow, the open source AI engineering platform for agents, LLMs and ML models.</p><footer><span class="rc__av"><img src="https://github.com/mlflow.png?size=96" alt="" loading="lazy" width="48" height="48"></span><span><b>mlflow/mlflow</b><br><a href="https://github.com/mlflow/mlflow/pull/27642" target="_blank" rel="noopener">Pull request #27642</a></span></footer></article>
-      <article class="rc"><header><h3>One-hour cache pricing,<br>merged at Microsoft</h3><span class="ic"><svg class="ln"><use href="#s-merge"/></svg></span></header><p>A fix to how cached tokens are priced in TokenEconomizer, Microsoft's cost control project for coding agents.</p><footer><span class="rc__av"><img src="https://github.com/microsoft.png?size=96" alt="" loading="lazy" width="48" height="48"></span><span><b>microsoft/TokenEconomizer</b><br><a href="https://github.com/microsoft/TokenEconomizer/pull/192" target="_blank" rel="noopener">Pull request #192</a></span></footer></article>
-      <article class="rc"><header><h3>Long reports over ntfy,<br>merged upstream</h3><span class="ic"><svg class="ln"><use href="#s-merge"/></svg></span></header><p>A fix so long analysis reports are delivered in full over ntfy notifications, in an LLM-driven stock analysis system.</p><footer><span class="rc__av"><img src="https://github.com/ZhuLinsen.png?size=96" alt="" loading="lazy" width="48" height="48"></span><span><b>ZhuLinsen/daily_stock_analysis</b><br><a href="https://github.com/ZhuLinsen/daily_stock_analysis/pull/2516" target="_blank" rel="noopener">Pull request #2516</a></span></footer></article>
-      <article class="rc"><header><h3>Byte-order mark fix,<br>merged upstream</h3><span class="ic"><svg class="ln"><use href="#s-merge"/></svg></span></header><p>JSON files that start with a byte-order mark now parse correctly in earshot, an audio toolkit for coding agents.</p><footer><span class="rc__av"><img src="https://github.com/Leonxlnx.png?size=96" alt="" loading="lazy" width="48" height="48"></span><span><b>Leonxlnx/earshot</b><br><a href="https://github.com/Leonxlnx/earshot/pull/24" target="_blank" rel="noopener">Pull request #24</a></span></footer></article>
+    <div class="res__track" data-oss-merged></div>
+  </div>
+  <div class="wrap">
+    <div class="pend" data-in hidden>
+      <p class="pend__h"><b>In review</b><span>Open pull requests, waiting on maintainers.</span></p>
+      <ul data-oss-open></ul>
     </div>
   </div>
 </section>
@@ -420,7 +420,6 @@
         <span class="label" data-in>Beyond the code</span>
         <h2 class="h2" data-fill>Clubs and<br>community</h2>
       </div>
-      <p class="lead" data-lines>Most of what I know about working with people came from student clubs at INSAT, not from lectures.</p>
     </div>
     <div class="clubs__grid" data-in>
       <article class="club"><img src="assets/clubs/securinets.webp" alt="Securinets logo" width="160" height="160" loading="lazy"><div><h3>Securinets INSAT</h3><p class="club__role">Sponsoring Manager, CyberCamp 7.0</p><p>Tunisia's first cybersecurity association. I ran sponsoring for its bootcamp and play CTFs alongside its community.</p></div></article>
@@ -433,7 +432,7 @@
 <section class="sec cta" id="contact" data-nav="contact">
   <div class="wrap cta__in">
     <h2 class="cta__h"><span data-fill>Let's build<br>something</span><span class="cta__h2" data-fill>that ships.</span></h2>
-    <p class="lead" data-lines>I'm looking for a Summer 2027 internship in AI/ML, software engineering or AI security. Based in Ben Arous, Tunisia. Open to remote and relocation.</p>
+    <p class="lead" data-lines>Looking for a Summer 2027 internship as a software engineer, AI/ML engineer or AI security engineer. Based in Ben Arous, Tunisia. Open to remote and relocation.</p>
     <div class="chat">
       <img class="chat__av" src="assets/avatar.webp" alt="" width="96" height="96" loading="lazy">
       <div class="chat__col">
@@ -465,6 +464,7 @@
 <div class="dragc" aria-hidden="true"><span>Drag</span></div>
 
 <script src="data/repos.js"></script>
+<script src="data/oss.js"></script>
 <script src="js/vendor/gsap.min.js"></script>
 <script src="js/vendor/ScrollTrigger.min.js"></script>
 <script src="js/vendor/lenis.min.js"></script>

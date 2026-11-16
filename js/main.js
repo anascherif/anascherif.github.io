@@ -32,7 +32,16 @@
   let lenis = null;
 
   /* ------------------------------------------------------------------ helpers */
+  let refreshTimer = 0;
+  function safeRefresh() {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => { try { ScrollTrigger.refresh(); } catch (e) { console.error(e); } }, 80);
+  }
+
   const rem = () => parseFloat(getComputedStyle(root).fontSize);
+  // Data from the GitHub API is other people's text. Links built from it may only point at github.com.
+  const ghUrl = (u) => (/^https:\/\/github\.com\/[\w.\-\/#?=&%]+$/.test(String(u)) ? String(u) : 'https://github.com/' + GITHUB_USER);
+  const ghName = (n) => String(n).replace(/[^\w.\-]/g, '');
 
   function splitChars(el) {
     const chars = [];
@@ -331,29 +340,37 @@
     const dots = cards.map(() => { const d = document.createElement('span'); d.className = 'route__dot'; route.appendChild(d); return d; });
     let marks = []; let total = 0;
 
+    // one continuous line that flows downward through the cards: it leaves and reaches
+    // every anchor vertically, so each bend is a soft S and nothing loops or doubles back
+    const track = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    track.setAttribute('class', 'route__track');
+    svg.insertBefore(track, path);
+
     function build() {
-      const r = rem(); const gap = 0.95 * r;
-      const pts = cards.map((c, i) => ({
+      const r = rem(); const gap = 1.6 * r;
+      const pts = cards.map((c) => ({
         x: c.dataset.side === 'l' ? c.offsetLeft - gap : c.offsetLeft + c.offsetWidth + gap,
-        y: c.offsetTop + c.offsetHeight * (i === 0 ? 0.78 : 0.5)
+        y: c.offsetTop + c.offsetHeight * 0.5
       }));
       svg.setAttribute('viewBox', '0 0 ' + route.offsetWidth + ' ' + route.offsetHeight);
-      const k = 21 * r;
+      const f = (n) => n.toFixed(1);
       const first = pts[0];
-      let d = 'M' + (first.x + 9 * r) + ' ' + (first.y - 13 * r) + ' C' + (first.x + 9 * r) + ' ' + (first.y - 5 * r) + ' ' + (first.x + 7 * r) + ' ' + first.y + ' ' + first.x + ' ' + first.y;
+      let d = 'M' + f(first.x) + ' ' + f(first.y - 12 * r) + ' L' + f(first.x) + ' ' + f(first.y);
       const prefixes = [d];
       for (let i = 0; i < pts.length - 1; i++) {
-        const dir = i % 2 === 0 ? -1 : 1; const a = pts[i]; const b = pts[i + 1];
-        d += ' C' + (a.x + dir * k) + ' ' + a.y + ' ' + (b.x + dir * k) + ' ' + b.y + ' ' + b.x + ' ' + b.y;
+        const p0 = pts[i]; const p1 = pts[i + 1]; const pull = (p1.y - p0.y) * 0.5;
+        d += ' C' + f(p0.x) + ' ' + f(p0.y + pull) + ' ' + f(p1.x) + ' ' + f(p1.y - pull) + ' ' + f(p1.x) + ' ' + f(p1.y);
         prefixes.push(d);
       }
       path.setAttribute('d', d);
+      const last = pts[pts.length - 1];
+      const tailD = 'M' + f(last.x) + ' ' + f(last.y) + ' L' + f(last.x) + ' ' + f(last.y + 10 * r);
+      tail.setAttribute('d', tailD);
+      track.setAttribute('d', d + ' L' + f(last.x) + ' ' + f(last.y + 10 * r));
       total = path.getTotalLength();
       const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      marks = prefixes.map((p) => { probe.setAttribute('d', p); return probe.getTotalLength() / total; });
-      const last = pts[pts.length - 1]; const ld = (pts.length - 1) % 2 === 0 ? -1 : 1;
-      tail.setAttribute('d', 'M' + last.x + ' ' + last.y + ' C' + (last.x + ld * 6 * r) + ' ' + last.y + ' ' + (last.x + ld * 10 * r) + ' ' + (last.y + 3 * r) + ' ' + (last.x + ld * 11 * r) + ' ' + (last.y + 9 * r));
-      pts.forEach((p, i) => { dots[i].style.left = p.x + 'px'; dots[i].style.top = p.y + 'px'; });
+      marks = prefixes.map((q) => { probe.setAttribute('d', q); return probe.getTotalLength() / total; });
+      pts.forEach((q, i) => { dots[i].style.left = q.x + 'px'; dots[i].style.top = q.y + 'px'; });
       path.style.strokeDasharray = total;
     }
     build();
@@ -452,7 +469,7 @@
       list.innerHTML = shown.map((r) => {
         const isNew = !r.team && (Date.now() - new Date(r.created_at)) / 864e5 < NEW_DAYS;
         const badge = r.team ? '<b class="repo__new">team</b>' : (isNew ? '<b class="repo__new">new</b>' : '');
-        return '<li class="repo"><a href="' + esc(r.html_url) + '" target="_blank" rel="noopener">' +
+        return '<li class="repo"><a href="' + esc(ghUrl(r.html_url)) + '" target="_blank" rel="noopener">' +
           '<span class="repo__n"><span>' + esc(r.name) + '</span>' + badge + '</span>' +
           '<span class="repo__d">' + esc((r.description && r.description.trim().length > 4 ? r.description : REPO_NOTES[r.name]) || r.description || 'No description yet.') + '</span>' +
           '<span class="repo__l">' + (r.language ? '<i style="--lc:' + (LANG[r.language] || 'rgba(11,12,14,.35)') + '"></i>' + esc(r.language) : '') + '</span>' +
@@ -463,7 +480,7 @@
       more.textContent = expanded ? 'Show fewer' : 'Show all ' + all.length;
       if (!reduced && !first) gsap.fromTo(list.children, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.035, ease: 'power2.out', clearProps: 'transform' });
       first = false;
-      ScrollTrigger.refresh();
+      safeRefresh();
     }
     function status(live, fetchedAt) {
       const n = repos.filter((r) => !HIDE_REPOS.includes(r.name)).length;
@@ -500,18 +517,67 @@
       .catch(() => { if (repos.length) status(false, snap.fetchedAt); else { stText.textContent = 'GitHub is unreachable right now.'; st.classList.add('is-off'); list.setAttribute('aria-busy', 'false'); } });
   }
 
+  /* ------------------------------------------------------------------ open source
+     Pull requests to other people's repositories with at least OSS_MIN_STARS stars.
+     Merged ones become cards (most-starred first), open ones are listed as "in review".
+     The list comes from data/oss.js, which the deploy workflow rebuilds every six hours,
+     so a newly merged pull request appears on its own within that time. */
+  const OSS_MIN_STARS = 4000;
+  let dragSync = null;
+
+  function initOss() {
+    const row = $('[data-oss-merged]'); const pend = $('.pend'); const list = $('[data-oss-open]');
+    if (!row) return;
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const kfmt = (n) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n));
+    const tidy = (t) => { const s = t.replace(/^\s*[A-Za-z]+(\([^)]*\))?:\s*/, ''); return s.charAt(0).toUpperCase() + s.slice(1); };
+    const day = (d) => new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(d));
+    let shown = '';
+
+    function render(items) {
+      const key = JSON.stringify(items.map((i) => [i.url, i.state, i.stars, i.approved]));
+      if (key === shown) return; shown = key;
+      const merged = items.filter((i) => i.state === 'merged').sort((a, b) => b.stars - a.stars);
+      const open = items.filter((i) => i.state === 'open').sort((a, b) => b.stars - a.stars);
+      row.innerHTML = merged.map((i) => {
+        const [owner, name] = i.repo.split('/');
+        return '<article class="rc oss"><header><span class="rc__av"><img src="https://github.com/' + ghName(owner) + '.png?size=96" alt="" loading="lazy" width="48" height="48"></span>' +
+          '<span class="oss__repo">' + esc(owner) + '/<b>' + esc(name) + '</b></span></header>' +
+          '<p class="oss__stars"><svg><use href="#s-star"/></svg><b>' + kfmt(i.stars) + '</b><span>stars</span></p>' +
+          '<h3>' + esc(tidy(i.title)) + '</h3>' +
+          '<footer><a href="' + esc(ghUrl(i.url)) + '" target="_blank" rel="noopener">Pull request #' + i.number + '</a><span>Merged ' + day(i.date) + '</span></footer></article>';
+      }).join('');
+      pend.hidden = !open.length;
+      list.innerHTML = open.map((i) =>
+        '<li class="repo"><a href="' + esc(ghUrl(i.url)) + '" target="_blank" rel="noopener">' +
+        '<span class="repo__n"><span>' + esc(i.repo.split('/')[1]) + '</span><small>' + kfmt(i.stars) + ' stars</small></span>' +
+        '<span class="repo__d">' + esc(tidy(i.title)) + '</span>' +
+        '<span class="pend__st' + (i.approved ? ' is-ok' : '') + '">' + (i.approved ? 'Approved' : 'In review') + '</span>' +
+        '<span class="repo__go"><svg><use href="#i-arrow"/></svg></span></a></li>').join('');
+      if (dragSync) dragSync();
+      safeRefresh();
+    }
+
+    render((window.OSS_SNAPSHOT && window.OSS_SNAPSHOT.items) || []);
+  }
+
   /* ------------------------------------------------------------------ results drag row */
   function initDrag() {
     const view = $('[data-drag]'); if (!view) return;
-    const track = $('.res__track', view); const cards = $$('.rc', track); const dash = $('.res__dash');
-    cards.forEach(() => dash.appendChild(document.createElement('i')));
-    const dashes = $$('i', dash);
+    const track = $('.res__track', view); const dash = $('.res__dash');
+    let cards = []; let dashes = [];
+    let x = 0, tx = 0, down = false, sx = 0, stx = 0, moved = 0, lastX = 0, v = 0, cur = -1;
+    dragSync = () => {
+      cards = $$('.rc', track); dash.textContent = '';
+      cards.forEach(() => dash.appendChild(document.createElement('i')));
+      dashes = $$('i', dash); cur = -1; tx = 0;
+    };
+    dragSync();
     if (!desktop.matches) return;
 
-    let x = 0, tx = 0, down = false, sx = 0, stx = 0, moved = 0, lastX = 0, v = 0, cur = -1;
     const min = () => Math.min(0, view.clientWidth - parseFloat(getComputedStyle(view).paddingLeft) - track.scrollWidth);
     const clamp = (n) => Math.max(min(), Math.min(0, n));
-    const step = () => cards[1].offsetLeft - cards[0].offsetLeft;
+    const step = () => (cards.length > 1 ? cards[1].offsetLeft - cards[0].offsetLeft : 1);
 
     view.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
@@ -615,7 +681,7 @@
   async function boot() {
     const hash = location.hash && document.getElementById(location.hash.slice(1));
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    if (!hash) window.scrollTo(0, 0);
+    window.scrollTo(0, 0);
 
     const img = $('.portrait img');
     await Promise.race([
@@ -624,22 +690,20 @@
     ]);
 
     $$('[data-hl]').forEach((el) => splitLines(el));
+    window.scrollTo(0, 0);          // again after the wait: some browsers restore the old position late
     initLenis();
+    if (lenis) lenis.scrollTo(0, { immediate: true, force: true });
     initUi();
-    if (flightOn) initFlight();
-    initSide();
-    initReveals();
-    initJourney();
-    initWork();
-    initGithub();
-    initDrag();
-    initChat();
+    const run = (fn) => { try { fn(); } catch (e) { console.error(e); } };
+    if (flightOn) initFlight();      // if this one fails the catch below falls back to the plain page
+    [initSide, initReveals, initJourney, initWork, initGithub, initOss, initDrag, initChat].forEach(run);
 
     root.classList.add('ready');
     intro(!!hash);
-    ScrollTrigger.refresh();
-    if (hash) requestAnimationFrame(() => scrollToEl(hash, true));
-    window.addEventListener('load', () => ScrollTrigger.refresh());
+    run(() => ScrollTrigger.refresh());
+    if (hash) setTimeout(() => scrollToEl(hash, true), 120);
+    window.addEventListener('load', safeRefresh);
+    window.addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
   }
 
   boot().catch((err) => {

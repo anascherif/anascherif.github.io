@@ -3,3 +3,10 @@ tools/portrait-src.png
 node_modules/
 tools/raw/
 archive-v1/
+
+# never commit secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
