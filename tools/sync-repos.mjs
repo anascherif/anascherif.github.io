@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const USER = process.env.GITHUB_USER || 'anascherif';
-const MIN_STARS = 4000;
+const MIN_STARS = 3500;
 const dataDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'data');
 const headers = { Accept: 'application/vnd.github+json', 'User-Agent': 'portfolio-sync' };
 if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;

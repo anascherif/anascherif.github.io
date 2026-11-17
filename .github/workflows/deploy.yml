@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "17 */6 * * *"   # refresh the saved repository snapshot four times a day
+    - cron: "17 * * * *"   # refresh repositories and open source contributions every hour
   workflow_dispatch:
 
 permissions:

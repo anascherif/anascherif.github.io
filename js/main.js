@@ -273,26 +273,25 @@
       gsap.fromTo(big.children[1], { x: () => 9 * rem() }, { x: () => -5 * rem(), ease: 'none', scrollTrigger: { trigger: big, start: 'top bottom', end: 'bottom top', scrub: 0.6, invalidateOnRefresh: true } });
     }
 
-    // proof tiles: rise in one after another, numbers count up once
-    const tiles = $$('.proof article');
-    if (tiles.length) {
-      const fmt = (el, v) => {
-        const target = parseFloat(el.dataset.count); const dec = (el.dataset.count.split('.')[1] || '').length;
-        const n = dec ? v.toFixed(dec) : Math.round(v).toLocaleString('en-US');
-        el.textContent = (el.dataset.pre || '') + n + (el.dataset.post || '');
-        return target;
-      };
-      gsap.set(tiles, { autoAlpha: 0, y: 50 });
-      ScrollTrigger.create({
-        trigger: '.proof', start: 'top 88%', once: true,
-        onEnter: () => {
-          gsap.to(tiles, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.1, ease: 'power3.out', clearProps: 'transform' });
-          tiles.forEach((t, i) => {
-            const b = $('b', t); const o = { v: 0 }; const end = parseFloat(b.dataset.count);
-            gsap.to(o, { v: end, duration: 1.6, delay: 0.15 + i * 0.1, ease: 'power2.out', onUpdate: () => fmt(b, o.v), onComplete: () => fmt(b, end) });
+    // what I build: rows rise in, and on hover a project image follows the cursor
+    const rows = $$('.disc__row');
+    if (rows.length) {
+      gsap.from(rows, { autoAlpha: 0, y: 40, duration: 0.9, stagger: 0.08, ease: 'power3.out', clearProps: 'transform,opacity,visibility', scrollTrigger: { trigger: '.disc', start: 'top 85%', once: true } });
+      const box = $('.disc__img'); const img = $('img', box);
+      if (box && canHover && desktop.matches) {
+        rows.forEach((r) => { const pre = new Image(); pre.src = r.dataset.img; });
+        const qx = gsap.quickTo(box, 'x', { duration: 0.55, ease: 'power3.out' });
+        const qy = gsap.quickTo(box, 'y', { duration: 0.55, ease: 'power3.out' });
+        gsap.set(box, { autoAlpha: 0, scale: 0.85, rotate: -4 });
+        rows.forEach((r) => {
+          r.addEventListener('pointerenter', (e) => {
+            if (img.getAttribute('src') !== r.dataset.img) img.src = r.dataset.img;
+            gsap.to(box, { autoAlpha: 1, scale: 1, rotate: 0, duration: 0.5, ease: 'power3.out', overwrite: 'auto' });
           });
-        }
-      });
+          r.addEventListener('pointerleave', () => gsap.to(box, { autoAlpha: 0, scale: 0.85, rotate: -4, duration: 0.35, ease: 'power2.in', overwrite: 'auto' }));
+          r.addEventListener('pointermove', (e) => { qx(e.clientX); qy(e.clientY); });
+        });
+      }
     }
 
     const fl = $('[data-footlogo]');
@@ -520,9 +519,10 @@
   /* ------------------------------------------------------------------ open source
      Pull requests to other people's repositories with at least OSS_MIN_STARS stars.
      Merged ones become cards (most-starred first), open ones are listed as "in review".
-     The list comes from data/oss.js, which the deploy workflow rebuilds every six hours,
-     so a newly merged pull request appears on its own within that time. */
-  const OSS_MIN_STARS = 4000;
+     data/oss.js (rebuilt by the deploy workflow every hour) is shown first, then each pull
+     request that is not merged yet, and any new one in the public activity feed, is checked
+     live, so a merge shows up on the next page load. */
+  const OSS_MIN_STARS = 3500;
   let dragSync = null;
 
   function initOss() {
@@ -554,11 +554,49 @@
         '<span class="repo__d">' + esc(tidy(i.title)) + '</span>' +
         '<span class="pend__st' + (i.approved ? ' is-ok' : '') + '">' + (i.approved ? 'Approved' : 'In review') + '</span>' +
         '<span class="repo__go"><svg><use href="#i-arrow"/></svg></span></a></li>').join('');
+      $$('[data-fly="s2n"], [data-ghost="s2n"]').forEach((el) => { el.textContent = String(merged.length); });
       if (dragSync) dragSync();
       safeRefresh();
     }
 
-    render((window.OSS_SNAPSHOT && window.OSS_SNAPSHOT.items) || []);
+    const snap = (window.OSS_SNAPSHOT && window.OSS_SNAPSHOT.items) || [];
+    render(snap);
+
+    // live check: one call for the activity feed, then one per pull request still waiting
+    const KEY = 'gh-oss-live-' + GITHUB_USER;
+    const H = { headers: { Accept: 'application/vnd.github+json' } };
+    (async () => {
+      try {
+        const c = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+        if (c && Date.now() - c.t < 6e5) return c.d;
+      } catch (e) { /* ignore */ }
+      const byKey = new Map(snap.map((i) => [i.repo + '#' + i.number, i]));
+      try {
+        const ev = await fetch('https://api.github.com/users/' + GITHUB_USER + '/events/public?per_page=100', H);
+        if (ev.ok) {
+          (await ev.json()).filter((e) => e.type === 'PullRequestEvent' && e.payload && e.payload.pull_request).forEach((e) => {
+            const k = e.repo.name + '#' + e.payload.pull_request.number;
+            if (!byKey.has(k) && e.repo.name.split('/')[0].toLowerCase() !== GITHUB_USER.toLowerCase()) byKey.set(k, { repo: e.repo.name, number: e.payload.pull_request.number, state: 'unknown' });
+          });
+        }
+      } catch (e) { /* feed is optional */ }
+      const out = [];
+      for (const it of byKey.values()) {
+        if (it.state === 'merged') { out.push(it); continue; }
+        try {
+          const r = await fetch('https://api.github.com/repos/' + it.repo + '/pulls/' + it.number, H);
+          if (!r.ok) { if (it.state === 'open') out.push(it); continue; }
+          const pr = await r.json();
+          if (!pr.user || pr.user.login.toLowerCase() !== GITHUB_USER.toLowerCase()) continue;
+          if (!pr.merged_at && pr.state !== 'open') continue;
+          const stars = pr.base.repo.stargazers_count;
+          if (stars < OSS_MIN_STARS) continue;
+          out.push({ repo: it.repo, stars, number: it.number, title: pr.title, url: pr.html_url, state: pr.merged_at ? 'merged' : 'open', date: pr.merged_at || pr.created_at, approved: !pr.merged_at && !!it.approved });
+        } catch (e) { if (it.state === 'open') out.push(it); }
+      }
+      try { sessionStorage.setItem(KEY, JSON.stringify({ t: Date.now(), d: out })); } catch (e) { /* ignore */ }
+      return out;
+    })().then((d) => { if (d && d.length) render(d); }).catch(() => { /* keep the saved copy */ });
   }
 
   /* ------------------------------------------------------------------ results drag row */
