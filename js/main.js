@@ -654,6 +654,7 @@
         let ok = true;
         try { await navigator.clipboard.writeText(btn.dataset.copy); } catch (e) { ok = false; }
         tip.textContent = ok ? 'Copied' : btn.dataset.copy; tip.classList.add('is-on');
+        if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({ path: 'email-copy', title: 'Email: copied from sidebar', event: true });
         setTimeout(() => tip.classList.remove('is-on'), 1600);
       });
     });
