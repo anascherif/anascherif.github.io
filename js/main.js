@@ -259,41 +259,6 @@
       });
     });
 
-    $$('[data-big]').forEach((el) => {
-      gsap.from(el.children, {
-        yPercent: 55, autoAlpha: 0, filter: 'blur(14px)', duration: 1.15, stagger: 0.12, ease: 'power3.out', clearProps: 'filter',
-        scrollTrigger: { trigger: el, start: 'top 82%', once: true }
-      });
-    });
-
-    // statement heading drifts in from both sides as it crosses the screen
-    const big = $('.big');
-    if (big && desktop.matches) {
-      gsap.fromTo(big.children[0], { x: () => -9 * rem() }, { x: () => 5 * rem(), ease: 'none', scrollTrigger: { trigger: big, start: 'top bottom', end: 'bottom top', scrub: 0.6, invalidateOnRefresh: true } });
-      gsap.fromTo(big.children[1], { x: () => 9 * rem() }, { x: () => -5 * rem(), ease: 'none', scrollTrigger: { trigger: big, start: 'top bottom', end: 'bottom top', scrub: 0.6, invalidateOnRefresh: true } });
-    }
-
-    // what I build: rows rise in, and on hover a project image follows the cursor
-    const rows = $$('.disc__row');
-    if (rows.length) {
-      gsap.from(rows, { autoAlpha: 0, y: 40, duration: 0.9, stagger: 0.08, ease: 'power3.out', clearProps: 'transform,opacity,visibility', scrollTrigger: { trigger: '.disc', start: 'top 85%', once: true } });
-      const box = $('.disc__img'); const img = $('img', box);
-      if (box && canHover && desktop.matches) {
-        rows.forEach((r) => { const pre = new Image(); pre.src = r.dataset.img; });
-        const qx = gsap.quickTo(box, 'x', { duration: 0.55, ease: 'power3.out' });
-        const qy = gsap.quickTo(box, 'y', { duration: 0.55, ease: 'power3.out' });
-        gsap.set(box, { autoAlpha: 0, scale: 0.85, rotate: -4 });
-        rows.forEach((r) => {
-          r.addEventListener('pointerenter', (e) => {
-            if (img.getAttribute('src') !== r.dataset.img) img.src = r.dataset.img;
-            gsap.to(box, { autoAlpha: 1, scale: 1, rotate: 0, duration: 0.5, ease: 'power3.out', overwrite: 'auto' });
-          });
-          r.addEventListener('pointerleave', () => gsap.to(box, { autoAlpha: 0, scale: 0.85, rotate: -4, duration: 0.35, ease: 'power2.in', overwrite: 'auto' }));
-          r.addEventListener('pointermove', (e) => { qx(e.clientX); qy(e.clientY); });
-        });
-      }
-    }
-
     const fl = $('[data-footlogo]');
     if (fl) gsap.from($$('path', fl), { yPercent: 106, duration: 1.2, stagger: 0.1, ease: 'power3.out', scrollTrigger: { trigger: fl, start: 'top 92%', once: true } });
   }
@@ -435,7 +400,7 @@
 
     const items = $$('.mi');
     const setOn = (id) => items.forEach((a) => a.classList.toggle('is-on', a.getAttribute('href') === '#' + id));
-    ['top', 'journey', 'work', 'focus', 'stack', 'security', 'github', 'results'].forEach((id) => {
+    ['top', 'journey', 'work', 'stack', 'security', 'github', 'results'].forEach((id) => {
       const el = document.getElementById(id);
       ScrollTrigger.create({ trigger: el, start: 'top 55%', end: 'bottom 55%', onToggle: (self) => { if (self.isActive) setOn(id); } });
     });
